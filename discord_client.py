@@ -6,25 +6,15 @@ from discord.ext import commands
 import discord
 from get_file import rdm
 import os
-
-abspath = os.path.abspath(__file__)
-dname = os.path.dirname(abspath)
-os.chdir(dname)
+import random
 
 # read our environment variables
 with open("./env.json", "r") as env:
     ENV = json.load(env)
 
-# set our environment variables
-FOLDER_CRITICAL = ENV["folder_critical"]
-FOLDER_CRITICAL_HELPER = ENV["folder_critical_helper"]
-FOLDER_FAIL = ENV["folder_fail"]
-FOLDER_FAIL_HELPER = ENV["folder_fail_helper"]
 
-COMMAND_FAIL = ENV["command_fail"]
-COMMAND_CRITICAL = ENV["command_critical"]
-COMMAND_FAIL_HELPER = ENV["command_fail_helper"]
-COMMAND_CRITICAL_HELPER = ENV["command_critical_helper"]
+COMMAND_RESET = ENV["command_reset"]
+COMMAND_ROLL_INITIATIVE = ENV["command_initiative"]
 
 COMMAND_CHAR = ENV['command_char']  # Command used to activate bot on discord
 
@@ -51,80 +41,30 @@ SIGN = (
 )
 
 
-def DISPLAY_ERROR(error_msg):
-    print(
-        "\n" +
-        SIGN +
-        " " +
-        COLORS["RED"] +
-        error_msg +
-        COLORS["NEUTRAL"] +
-        "\n"
-    )
+class InitItem():
+    def __init__(self, name, value, dex=0):
+        self.name = name
+        self.value = value
+        self.dex = dex
+        self.total = value + dex
 
 
-def log(context):
-    channel = context.message.channel
-    author = context.message.author
+class InitTable():
 
-    channel_type = str(channel.type)
-    name = author.name
-    discriminator = author.discriminator
-    nickname = author.display_name
+    initiative_table = []
 
-    pseudo = (
-        COLORS["RED"] +
-        name + "#" + discriminator +
-        COLORS["NEUTRAL"] +
-        " (aka. " +
-        COLORS["BLUE"] +
-        nickname +
-        COLORS["NEUTRAL"] +
-        ")"
-    )
+    def add(self, name, value, dex=0):
+        self.initiative_table.append(InitItem(name, value, dex))
 
-    date = "{:04}/{:02}/{:02} {:02}:{:02}:{:02}".format(
-        datetime.now().year,
-        datetime.now().month,
-        datetime.now().day,
-        datetime.now().hour,
-        datetime.now().minute,
-        datetime.now().second
-    )
-    date = COLORS["PURPLE"] + date + COLORS["NEUTRAL"]
+    def reset(self):
+        self.initiative_table = []
 
-    if channel_type in ["text"]:
-        guild = channel.guild
+    async def show(self, context):
+        for i in sorted(self.initiative_table, key=lambda x: x.total, reverse=True):
+            await context.send(f"{i.name} |{i.dex}| + [{i.value}] = Total: {i.total}")
 
-        server = (
-            COLORS["GREEN"] +
-            guild.name +
-            COLORS["NEUTRAL"]
-        )
-        channel = (
-            COLORS["CYAN"] +
-            channel.name +
-            COLORS["NEUTRAL"]
-        )
-        where = "on the server {srv} in {chan}".format(
-            srv=server,
-            chan=channel
-        )
-    elif channel_type in ["private"]:
-        where = "in " + COLORS["GREEN"] + "direct message" + COLORS["NEUTRAL"]
-    else:    
-        print(
-            COLORS["RED"] +
-            "This isn't a channel we can send images" +
-            COLORS["NEUTRAL"]
-        )
 
-    print("{psd} ask for an image {where} at {date}".format(
-        psd=pseudo,
-        where=where,
-        date=date
-    ))
-
+init_items = InitTable()
 
 # read our discord acces token
 with open("secrets.json", "r") as secrets:
@@ -132,75 +72,36 @@ with open("secrets.json", "r") as secrets:
 
 bot = commands.Bot(
     command_prefix=COMMAND_CHAR,
-    description="Send a random image"
+    description="Roll a random initiative, store and sort"
 )
 
 
-# CRITICAL COMMANDS ================
+# COMMANDS ================
 @bot.command(
-    name=COMMAND_CRITICAL,
-    description="Send an critical card! Good shit"
+    name=COMMAND_RESET,
+    description="Reset the initiative table"
 )
-async def random_critical_image(context):
-    await send_img(FOLDER_CRITICAL, context)
+async def roll_reset_initiative(context):
+    init_items.reset()
+    await context.send("OK, NVM")
 
 
 @bot.command(
-    name=COMMAND_CRITICAL_HELPER,
+    name=COMMAND_ROLL_INITIATIVE,
     description="Send an help for critical command!"
 )
-async def critical_help_image(context):
-    await send_img(FOLDER_CRITICAL_HELPER, context)
-
-
-# FAIL COMMANDS =====================
-@bot.command(
-    name=COMMAND_FAIL,
-    description="Send an fail card! Oh no..."
-)
-async def random_fail_image(context):
-    await send_img(FOLDER_FAIL, context)    
-
-
-@bot.command(
-    name=COMMAND_FAIL_HELPER,
-    description="Send an help for critical command!"
-)
-async def critical_help_image(context):
-    await send_img(FOLDER_FAIL_HELPER, context)
-
-
-
-async def send_img(folder, context):
-    log(context)
+async def roll_initiative(context, dex="", name_arg=""):
     try:
-        msg_content = {
-            "file": discord.File(
-                folder + "/{}".format(rdm(folder))
-            )
-        }
-    except FileNotFoundError:
-        DISPLAY_ERROR("The folder `{}` was not found".format(folder))
-        msg_content = {
-            "content": "The folder with images is missing, sorry..."
-        }
-    except ValueError:
-        DISPLAY_ERROR("The folder `{}` is empty".format(folder))
-        msg_content = {"content": "The folder with images is totaly empty"}
+        dex = int(dex)
+        name = name_arg if name_arg else context.message.author.display_name
 
-    try:
-        await context.send(**msg_content)
-    except:
-        DISPLAY_ERROR("Somethings went wrong")
-        msg_content = {"content": "Somethings went wrongs, sorry.\n┬─┬ ︵ /(.□. \）"}
-        await context.send(**msg_content)
+        init_items.add(name, random.randint(0, 20), dex)
+        await init_items.show(context)
 
-
-
-@bot.command()
-async def test(ctx, arg):
-    await ctx.send(arg)
-
+    except Exception as e:
+        await context.send(f"Digite um numero (normalmente sua destreza). {dex} não é válido... ")
+        await context.send(f"Exception {e}")
+                
 
 @bot.event
 async def on_ready():
