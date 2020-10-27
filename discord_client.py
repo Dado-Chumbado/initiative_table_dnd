@@ -15,6 +15,7 @@ with open("./env.json", "r") as env:
 
 COMMAND_RESET = ENV["command_reset"]
 COMMAND_ROLL_INITIATIVE = ENV["command_initiative"]
+COMMAND_REMOVE_INITIATIVE = ENV["command_remove_initiative"]
 
 COMMAND_CHAR = ENV['command_char']  # Command used to activate bot on discord
 
@@ -55,14 +56,22 @@ class InitTable():
 
     def add(self, name, value, dex=0):
         self.initiative_table.append(InitItem(name, value, dex))
+        self.initiative_table = sorted(self.initiative_table, key=lambda x: x.total, reverse=True)
+
 
     def reset(self):
         self.initiative_table = []
 
-    async def show(self, context):
-        for i in sorted(self.initiative_table, key=lambda x: x.total, reverse=True):
-            await context.send(f"{i.name} |{i.dex}| + [{i.value}] = Total: {i.total}")
+    async def remove_index(self, context, index):
+        self.initiative_table.remove(self.initiative_table[index-1])
+        await self.show(context)
 
+    async def show(self, context):
+        text = ""
+        for i in self.initiative_table:
+            text += f"{i.name} |{i.dex}| + [{i.value}] = Total: {i.total}\n"
+
+        await context.send(text)
 
 init_items = InitTable()
 
@@ -84,6 +93,14 @@ bot = commands.Bot(
 async def roll_reset_initiative(context):
     init_items.reset()
     await context.send("OK, NVM")
+
+
+@bot.command(
+    name=COMMAND_REMOVE_INITIATIVE,
+    description="Remove item from table"
+)
+async def remove_initiative(context, index=0):
+    await init_items.remove_index(context, index)
 
 
 @bot.command(
