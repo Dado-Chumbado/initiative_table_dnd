@@ -8,6 +8,10 @@ from get_file import rdm
 import os
 import random
 
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
 # read our environment variables
 with open("./env.json", "r") as env:
     ENV = json.load(env)
