@@ -71,10 +71,11 @@ class InitTable():
         await self.show(context)
 
     async def show(self, context):
-        text = ""
-        for i in self.initiative_table:
-            text += f"{i.name} |{i.dex}| + [{i.value}] = Total: {i.total}\n"
-
+        text = "```"
+        for i, item in enumerate(self.initiative_table):
+            ft = "**" if item.value == 20 else ""
+            text += f"{i+1}: {item.name} |{item.dex}| + [{item.value}] = Total: {item.total}\n"
+        text += "```"
         await context.send(text)
 
 init_items = InitTable()
@@ -96,7 +97,7 @@ bot = commands.Bot(
 )
 async def roll_reset_initiative(context):
     init_items.reset()
-    await context.send("OK, NVM")
+    await context.send("OK, limpei a tabela. Bons dados :)")
 
 
 @bot.command(
@@ -116,7 +117,7 @@ async def roll_initiative(context, dex="", name_arg=""):
         dex = int(dex)
         name = name_arg if name_arg else context.message.author.display_name
 
-        init_items.add(name, random.randint(0, 20), dex)
+        init_items.add(name, random.randint(1, 20), dex)
         await init_items.show(context)
 
     except Exception as e:
