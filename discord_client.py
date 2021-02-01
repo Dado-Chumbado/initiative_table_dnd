@@ -18,6 +18,7 @@ with open("./env.json", "r") as env:
 
 
 COMMAND_RESET = ENV["command_reset"]
+COMMAND_REPRINT = ENV["command_reprint"]
 COMMAND_ROLL_INITIATIVE = ENV["command_initiative"]
 COMMAND_REMOVE_INITIATIVE = ENV["command_remove_initiative"]
 
@@ -62,7 +63,6 @@ class InitTable():
         self.initiative_table.append(InitItem(name, value, dex))
         self.initiative_table = sorted(self.initiative_table, key=lambda x: x.total, reverse=True)
 
-
     def reset(self):
         self.initiative_table = []
 
@@ -98,6 +98,13 @@ bot = commands.Bot(
 async def roll_reset_initiative(context):
     init_items.reset()
     await context.send("OK, limpei a tabela. Bons dados :)")
+
+@bot.command(
+    name=COMMAND_REPRINT,
+    description="Reprint the initiative table"
+)
+async def reprint_initiative(context):
+    await self.show(context)
 
 
 @bot.command(
