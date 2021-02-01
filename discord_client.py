@@ -74,7 +74,7 @@ class InitTable():
         text = "```"
         for i, item in enumerate(self.initiative_table):
             ft = "**" if item.value == 20 else ""
-            text += f"{i+1}: {item.name} |{item.dex}| + [{item.value}] = Total: {item.total}\n"
+            text += f"{i+1}: {item.name} [{item.value}] + {item.dex} = Total: {item.total}\n"
         text += "```"
         await context.send(text)
 
@@ -104,7 +104,7 @@ async def roll_reset_initiative(context):
     description="Reprint the initiative table"
 )
 async def reprint_initiative(context):
-    await self.show(context)
+    await init_items.show(context)
 
 
 @bot.command(
