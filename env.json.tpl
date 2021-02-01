@@ -1,7 +1,10 @@
 {
     "command_char": "*", 
 
-    "command_reset": "reset-iniciativa",
     "command_initiative": "iniciativa",
-    "command_remove_initiative": "remover"
+    "command_reset": "iniciativa-limpar",
+    "command_remove_initiative": "iniciativa-remover",
+
+    "command_add_condition": "iniciativa-condicao",
+    "command_remove_condition": "iniciativa-condicao-remover"
 }

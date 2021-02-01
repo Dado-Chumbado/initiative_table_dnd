@@ -20,6 +20,8 @@ with open("./env.json", "r") as env:
 COMMAND_RESET = ENV["command_reset"]
 COMMAND_ROLL_INITIATIVE = ENV["command_initiative"]
 COMMAND_REMOVE_INITIATIVE = ENV["command_remove_initiative"]
+COMMAND_ADD_CONDITION_INITIATIVE = ENV["command_add_condition"]
+COMMAND_REMOVE_CONDITION_INITIATIVE = ENV["command_remove_condition"]
 
 COMMAND_CHAR = ENV['command_char']  # Command used to activate bot on discord
 
@@ -52,27 +54,34 @@ class InitItem():
         self.value = value
         self.dex = dex
         self.total = value + dex
+        self.condition = ""
 
 
 class InitTable():
 
     initiative_table = []
 
-    def add(self, name, value, dex=0):
+    async def add(self, name, value, dex=0):
         self.initiative_table.append(InitItem(name, value, dex))
         self.initiative_table = sorted(self.initiative_table, key=lambda x: x.total, reverse=True)
 
-    def reset(self):
+    async def reset(self):
         self.initiative_table = []
 
-    async def remove_index(self, context, index):
-        self.initiative_table.remove(self.initiative_table[index-1])
-        await self.show(context)
+    async def add_condition(self, index, condition):
+        self.initiative_table[int(index)-1].condition = condition
+
+    async def remove_condition(self, index):
+        self.initiative_table[int(index)-1].condition = ""
+
+    async def remove_index(self, index):
+        self.initiative_table.remove(self.initiative_table[int(index)-1])
 
     async def show(self, context):
         text = "```"
         for i, item in enumerate(self.initiative_table):
-            text += f"{i+1}: {item.name} [{item.value}] + {item.dex} = Total: {item.total}\n"
+            condition = f"|{item.condition}|" if item.condition else ""
+            text += f"{i+1}: {item.name} [{item.value}] + {item.dex} = Total: {item.total} {condition}\n"
         text += "```"
         await context.send(text)
 
@@ -94,7 +103,7 @@ bot = commands.Bot(
     description="Reset the initiative table"
 )
 async def roll_reset_initiative(context):
-    init_items.reset()
+    await init_items.reset()
     await context.send("OK, limpei a tabela. Bons dados :)")
 
 
@@ -103,7 +112,26 @@ async def roll_reset_initiative(context):
     description="Remove item from table"
 )
 async def remove_initiative(context, index=0):
-    await init_items.remove_index(context, index)
+    await init_items.remove_index(index)
+    await init_items.show(context)
+
+
+@bot.command(
+    name=COMMAND_ADD_CONDITION_INITIATIVE,
+    description="Add item from table"
+)
+async def add_condition_initiative(context, index, condition):
+    await init_items.add_condition(index, condition)
+    await init_items.show(context)
+
+
+@bot.command(
+    name=COMMAND_REMOVE_CONDITION_INITIATIVE,
+    description="Remove item from table"
+)
+async def remove_initiative(context, index):
+    await init_items.remove_condition(index)
+    await init_items.show(context)
 
 
 @bot.command(
@@ -118,7 +146,7 @@ async def roll_initiative(context, dex="", name_arg=""):
         dex = int(dex)
         name = name_arg if name_arg else context.message.author.display_name
 
-        init_items.add(name, random.randint(1, 20), dex)
+        await init_items.add(name, random.randint(1, 20), dex)
         await init_items.show(context)
 
     except Exception as e:
