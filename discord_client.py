@@ -18,7 +18,6 @@ with open("./env.json", "r") as env:
 
 
 COMMAND_RESET = ENV["command_reset"]
-COMMAND_REPRINT = ENV["command_reprint"]
 COMMAND_ROLL_INITIATIVE = ENV["command_initiative"]
 COMMAND_REMOVE_INITIATIVE = ENV["command_remove_initiative"]
 
@@ -73,7 +72,6 @@ class InitTable():
     async def show(self, context):
         text = "```"
         for i, item in enumerate(self.initiative_table):
-            ft = "**" if item.value == 20 else ""
             text += f"{i+1}: {item.name} [{item.value}] + {item.dex} = Total: {item.total}\n"
         text += "```"
         await context.send(text)
@@ -99,13 +97,6 @@ async def roll_reset_initiative(context):
     init_items.reset()
     await context.send("OK, limpei a tabela. Bons dados :)")
 
-@bot.command(
-    name=COMMAND_REPRINT,
-    description="Reprint the initiative table"
-)
-async def reprint_initiative(context):
-    await init_items.show(context)
-
 
 @bot.command(
     name=COMMAND_REMOVE_INITIATIVE,
@@ -121,6 +112,9 @@ async def remove_initiative(context, index=0):
 )
 async def roll_initiative(context, dex="", name_arg=""):
     try:
+        if not dex:
+            await init_items.show(context)
+            return
         dex = int(dex)
         name = name_arg if name_arg else context.message.author.display_name
 
