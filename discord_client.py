@@ -4,7 +4,6 @@ import json
 from datetime import datetime
 from discord.ext import commands
 import discord
-from get_file import rdm
 import os
 import random
 
@@ -138,15 +137,16 @@ async def remove_initiative(context, index):
     name=COMMAND_ROLL_INITIATIVE,
     description="Send an help for critical command!"
 )
-async def roll_initiative(context, dex="", name_arg=""):
+async def roll_initiative(context, dex="", name_arg="", repeat=1):
     try:
         if not dex:
             await init_items.show(context)
             return
         dex = int(dex)
-        name = name_arg if name_arg else context.message.author.display_name
+        for i in range(0, repeat):
+            name = f"{name_arg}{i}" if name_arg else context.message.author.display_name
 
-        await init_items.add(name, random.randint(1, 20), dex)
+            await init_items.add(name, random.randint(1, 20), dex)
         await init_items.show(context)
 
     except Exception as e:
