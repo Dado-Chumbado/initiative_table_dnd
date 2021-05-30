@@ -82,7 +82,10 @@ class InitTable():
             condition = f"|{item.condition}|" if item.condition else ""
             text += f"{i+1}: {item.name} [{item.value}] + {item.dex} = Total: {item.total} {condition}\n"
         text += "```"
-        await context.send(text)
+        if len(self.initiative_table) == 0:
+            await context.send("Nenhuma iniciativa registrada")
+        else:
+            await context.send(text)
 
 init_items = InitTable()
 
@@ -144,7 +147,9 @@ async def roll_initiative(context, dex="", name_arg="", repeat=1):
             return
         dex = int(dex)
         for i in range(0, repeat):
-            name = f"{name_arg}{i+1}" if name_arg and repeat > 1 else context.message.author.display_name
+            name = f"{name_arg}" if name_arg else context.message.author.display_name
+            if repeat > 1:
+                name += f"{i+1}"
 
             await init_items.add(name, random.randint(1, 20), dex)
         await init_items.show(context)
