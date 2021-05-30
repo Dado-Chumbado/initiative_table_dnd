@@ -144,7 +144,7 @@ async def roll_initiative(context, dex="", name_arg="", repeat=1):
             return
         dex = int(dex)
         for i in range(0, repeat):
-            name = f"{name_arg}{i+1}" if name_arg else context.message.author.display_name
+            name = f"{name_arg}{i+1}" if name_arg and repeat > 1 else context.message.author.display_name
 
             await init_items.add(name, random.randint(1, 20), dex)
         await init_items.show(context)
